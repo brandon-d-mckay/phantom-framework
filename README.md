@@ -4,6 +4,10 @@ The *Phantom Framework* provides an intuitive API that allows you to easily writ
 
 All internals of the framework are non-blocking and lock-free aside from the default task scheduler, which will block when there is currently no work to do.
 
+## Installation
+
+*(JAR file forthcoming)*
+
 ## Usage
 
 ### Lambdas
