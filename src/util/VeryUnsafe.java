@@ -1,4 +1,4 @@
-package phantom;
+package util;
 
 import java.lang.reflect.Field;
 import java.util.function.BinaryOperator;
@@ -11,7 +11,7 @@ import java.util.function.UnaryOperator;
 import sun.misc.Unsafe;
 
 @SuppressWarnings("restriction")
-class VeryUnsafe
+public class VeryUnsafe
 {
 	public static final Unsafe unsafe;
 	
@@ -29,7 +29,7 @@ class VeryUnsafe
 		}
 	}
 	
-	public static long getFieldOffSet(Class<?> objectClass, String volatileFieldName)
+	public static long getFieldOffset(Class<?> objectClass, String volatileFieldName)
 	{
 		try
 		{
