@@ -1,3 +1,0 @@
-package phantom;
-
-interface ParallelTaskContext {}
