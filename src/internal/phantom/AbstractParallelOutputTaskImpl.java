@@ -1,34 +1,45 @@
 package phantom;
 
-abstract class AbstractParallelOutputTaskImpl<O> extends AbstractOutputTaskImpl<O[]>
+import util.VolatileArray;
+
+abstract class AbstractParallelOutputTaskImpl<O> extends AbstractOutputTaskImpl<VolatileArray<O>>
 {
-	private final int numSubtasks;
+	protected final int numSubtasks;
 	
-	public AbstractParallelOutputTaskImpl(int numSubtasks, InputTaskImpl<? super O[]> nextTask)
+	public AbstractParallelOutputTaskImpl(int numSubtasks, InputTaskImpl<? super VolatileArray<O>> nextTask)
 	{
 		super(nextTask);
 		this.numSubtasks = numSubtasks;
 	}
 	
-	protected class Context extends AbstractParallelContext
+	protected class ParallelOutputContext extends AbstractParallelContext
 	{
-		protected final O[] subtaskOutputs;
+		protected final VolatileArray<O> subtaskOutputs = new VolatileArray<>(numSubtasks);
 		
-		@SuppressWarnings("unchecked")
-		public Context()
+		public ParallelOutputContext()
 		{
 			super(numSubtasks);
-			this.subtaskOutputs = (O[]) new Object[numSubtasks];
 		}
 		
-		public ParallelOutputContext<O> getSubContext(int subtaskOutputIndex)
+		public class ParallelOutputSubContext implements OutputContext<O>
 		{
-			return new SubContext(this, subtaskOutputIndex);
+			private final int subtaskOutputIndex;
+
+			public ParallelOutputSubContext(int subtaskOutputIndex)
+			{
+				this.subtaskOutputIndex = subtaskOutputIndex;
+			}
+			
+			@Override
+			public void complete(O output)
+			{
+				ParallelOutputContext.this.completeSubtask(subtaskOutputIndex, output);
+			}
 		}
 		
 		public void completeSubtask(int subtaskOutputIndex, O output)
 		{
-			subtaskOutputs[subtaskOutputIndex] = output;
+			subtaskOutputs.set(subtaskOutputIndex, output);
 			decrementCountdown();
 		}
 		
@@ -38,40 +49,22 @@ abstract class AbstractParallelOutputTaskImpl<O> extends AbstractOutputTaskImpl<
 			Phantom.dispatch(nextTask.createNewJob(subtaskOutputs));
 		}
 	}
-	
-	protected class ChildContext extends Context
+
+	protected class ParallelOutputChildContext extends ParallelOutputContext
 	{
-		private final ParallelContext parentContext;
-		
-		public ChildContext(ParallelContext parentContext)
-		{
-			this.parentContext = parentContext;
-		}
+		private final OutputContext<VolatileArray<O>> parentContext;
 		
 		@SuppressWarnings("unchecked")
+		public ParallelOutputChildContext(Context parentContext)
+		{
+			this.parentContext = (OutputContext<VolatileArray<O>>) parentContext;
+		}
+		
 		@Override
 		protected void dispatchNextTask()
 		{
 			if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(subtaskOutputs, parentContext));
-			else ((ParallelOutputContext<O[]>) parentContext).completeSubtask(subtaskOutputs);
-		}
-	}
-	
-	private class SubContext implements ParallelOutputContext<O>
-	{
-		private final Context delegateContext;
-		private final int subtaskOutputIndex;
-
-		public SubContext(Context delegateContext, int subtaskOutputIndex)
-		{
-			this.delegateContext = delegateContext;
-			this.subtaskOutputIndex = subtaskOutputIndex;
-		}
-		
-		@Override
-		public void completeSubtask(O output)
-		{
-			delegateContext.completeSubtask(subtaskOutputIndex, output);
+			else parentContext.complete(subtaskOutputs);
 		}
 	}
 }

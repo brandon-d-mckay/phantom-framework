@@ -23,7 +23,7 @@ class LeafConsumerBuilderImpl<I> implements ConsumerBuilderImpl<I>
 		return new LeafConsumerTaskImpl(null);
 	}
 	
-	class LeafConsumerTaskImpl extends AbstractNonOutputTaskImpl implements ConsumerTaskImpl<I>
+	private class LeafConsumerTaskImpl extends AbstractNonOutputTaskImpl implements ConsumerTaskImpl<I>
 	{
 		public LeafConsumerTaskImpl(NonInputTaskImpl nextTask)
 		{
@@ -37,12 +37,12 @@ class LeafConsumerBuilderImpl<I> implements ConsumerBuilderImpl<I>
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(I input, ParallelContext context)
+		public Job createNewSubParallelJob(I input, Context context)
 		{
 			return new SubParallelConsumerJob(input, context, metadata);
 		}
 		
-		protected class ConsumerJob extends AbstractJob
+		private class ConsumerJob extends AbstractJob
 		{
 			private final I input;
 			
@@ -61,11 +61,11 @@ class LeafConsumerBuilderImpl<I> implements ConsumerBuilderImpl<I>
 			}
 		}
 		
-		protected class SubParallelConsumerJob extends AbstractSubParallelJob
+		private class SubParallelConsumerJob extends AbstractSubParallelJob
 		{
 			private final I input;
 			
-			public SubParallelConsumerJob(I input, ParallelContext context, byte metadata)
+			public SubParallelConsumerJob(I input, Context context, byte metadata)
 			{
 				super(context, metadata);
 				this.input = input;
@@ -77,7 +77,7 @@ class LeafConsumerBuilderImpl<I> implements ConsumerBuilderImpl<I>
 				lambda.invoke(input);
 				
 				if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(context));
-				else ((ParallelNonOutputContext) context).completeSubtask();
+				else ((NonOutputContext) context).complete();
 			}
 		}
 	}

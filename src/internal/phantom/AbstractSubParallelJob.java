@@ -2,9 +2,9 @@ package phantom;
 
 abstract class AbstractSubParallelJob extends AbstractJob
 {
-	protected final ParallelContext context;
+	protected final Context context;
 	
-	public AbstractSubParallelJob(ParallelContext context, byte metadata)
+	public AbstractSubParallelJob(Context context, byte metadata)
 	{
 		super(metadata);
 		this.context = context;

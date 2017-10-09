@@ -1,6 +1,6 @@
 package phantom;
 
-import util.characteristics.Constructor;
+import util.Constructor;
 
 interface FunctionBuilderImpl<I, O> extends FunctionBuilder<I, O>, Constructor<FunctionTaskImpl<I, O>>
 {

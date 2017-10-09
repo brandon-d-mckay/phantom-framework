@@ -29,16 +29,36 @@ public class VeryUnsafe
 		}
 	}
 	
-	public static long getFieldOffset(Class<?> objectClass, String volatileFieldName)
+	public static long getFieldOffset(Class<?> objectClass, String fieldName)
 	{
 		try
 		{
-			return unsafe.objectFieldOffset(objectClass.getDeclaredField(volatileFieldName));
+			return unsafe.objectFieldOffset(objectClass.getDeclaredField(fieldName));
 		}
 		catch(NoSuchFieldException e)
 		{
 			throw new RuntimeException("Error: No field with the specified name exists in the specified class.", e);
 		}
+	}
+	
+	public static int getArrayBaseOffset(Class<?> arrayClass)
+	{
+		return unsafe.arrayBaseOffset(arrayClass);
+	}
+
+	public static int getArrayIndexScale(Class<?> arrayClass)
+	{
+		return unsafe.arrayIndexScale(arrayClass);
+	}
+	
+	public static Object getIndexVolatile(Object[] array, long byteOffset)
+	{
+		return unsafe.getObjectVolatile(array, byteOffset);
+	}
+	
+	public static void putIndexVolatile(Object[] array, long byteOffset, Object value)
+	{
+		unsafe.putObjectVolatile(array, byteOffset, value);
 	}
 	
 	public static void lazySetObject(Object object, long fieldOffset, Object newValue)

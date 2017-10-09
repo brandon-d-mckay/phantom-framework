@@ -1,6 +1,6 @@
 package phantom;
 
-import util.characteristics.Constructor;
+import util.Constructor;
 
 interface ProducerBuilderImpl<O> extends ProducerBuilder<O>, Constructor<ProducerTaskImpl<O>>
 {

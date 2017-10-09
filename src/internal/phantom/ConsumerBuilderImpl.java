@@ -1,6 +1,6 @@
 package phantom;
 
-import util.characteristics.Constructor;
+import util.Constructor;
 
 interface ConsumerBuilderImpl<I> extends ConsumerBuilder<I>, Constructor<ConsumerTaskImpl<I>>
 {

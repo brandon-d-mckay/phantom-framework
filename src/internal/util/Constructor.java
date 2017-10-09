@@ -1,4 +1,4 @@
-package util.characteristics;
+package util;
 
 public interface Constructor<T>
 {

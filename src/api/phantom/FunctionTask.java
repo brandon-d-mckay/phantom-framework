@@ -1,5 +1,5 @@
 package phantom;
 
-import util.characteristics.Mask;
+import util.Mask;
 
 public interface FunctionTask<I, O> extends Mask<FunctionTaskImpl<I, O>> {}

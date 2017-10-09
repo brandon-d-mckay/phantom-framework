@@ -16,7 +16,7 @@ abstract class AbstractSerialInputTaskImpl<I> implements InputTaskImpl<I>
 	}
 
 	@Override
-	public Job createNewSubParallelJob(I input, ParallelContext context)
+	public Job createNewSubParallelJob(I input, Context context)
 	{
 		return head.createNewSubParallelJob(input, context);
 	}

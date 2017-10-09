@@ -2,13 +2,14 @@ package phantom;
 
 import java.util.function.IntFunction;
 import util.AbstractCachedBuilder;
+import util.VolatileArray;
 
-class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImpl<O[]>> implements ParallelProducerBuilder<O>, ProducerBuilderImpl<O[]>
+class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImpl<VolatileArray<O>>> implements ParallelProducerBuilder<O>, ProducerBuilderImpl<VolatileArray<O>>
 {
 	private final IntFunction<ProducerTaskImpl<? extends O>[]> subtasksCollector;
 	
 	@SuppressWarnings("unchecked")
-	public ParallelProducerBuilderImpl(ProducerBuilderImpl<O> builder)
+	public ParallelProducerBuilderImpl(ProducerBuilderImpl<? extends O> builder)
 	{
 		this(
 			subtaskIndex -> {
@@ -21,7 +22,7 @@ class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskI
 	
 	private ParallelProducerBuilderImpl(IntFunction<ProducerTaskImpl<? extends O>[]> subtasksCollector)
 	{
-		super(() -> new ParallelProducerTask<>(subtasksCollector.apply(0), null));
+		super(() -> new ParallelProducerTaskImpl<>(subtasksCollector.apply(0), null));
 		this.subtasksCollector = subtasksCollector;
 	}
 	
@@ -38,22 +39,22 @@ class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskI
 	}
 	
 	@Override
-	public NonInputTaskImpl construct(InputTaskImpl<? super O[]> nextTask)
+	public NonInputTaskImpl construct(InputTaskImpl<? super VolatileArray<O>> nextTask)
 	{
-		return new ParallelProducerTask<>(subtasksCollector.apply(0), nextTask);
+		return new ParallelProducerTaskImpl<>(subtasksCollector.apply(0), nextTask);
 	}
 
 	@Override
-	public ProducerTaskImpl<O[]> construct()
+	public ProducerTaskImpl<VolatileArray<O>> construct()
 	{
 		return getFromCache();
 	}
 	
-	public static class ParallelProducerTask<O> extends AbstractParallelOutputTaskImpl<O> implements ProducerTaskImpl<O[]>
+	private static class ParallelProducerTaskImpl<O> extends AbstractParallelOutputTaskImpl<O> implements ProducerTaskImpl<VolatileArray<O>>
 	{
 		private final ProducerTaskImpl<? extends O>[] subtasks;
 
-		public ParallelProducerTask(ProducerTaskImpl<? extends O>[] subtasks, InputTaskImpl<? super O[]> nextTask)
+		public ParallelProducerTaskImpl(ProducerTaskImpl<? extends O>[] subtasks, InputTaskImpl<? super VolatileArray<O>> nextTask)
 		{
 			super(subtasks.length, nextTask);
 			this.subtasks = subtasks;
@@ -62,20 +63,20 @@ class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskI
 		@Override
 		public Job createNewJob()
 		{
-			return new ParallelProducerJob(new Context());
+			return new ParallelProducerJob(new ParallelOutputContext());
 		}
 
 		@Override
-		public Job createNewSubParallelJob(ParallelContext context)
+		public Job createNewSubParallelJob(Context context)
 		{
-			return new ParallelProducerJob(new ChildContext(context));
+			return new ParallelProducerJob(new ParallelOutputChildContext(context));
 		}
 		
-		protected class ParallelProducerJob extends AbstractJob
+		private class ParallelProducerJob extends AbstractJob
 		{
-			private final Context context;
+			private final ParallelOutputContext context;
 			
-			public ParallelProducerJob(Context context)
+			public ParallelProducerJob(ParallelOutputContext context)
 			{
 				super(Meta.ExecuteOnSupplyingThread);
 				this.context = context;
@@ -84,10 +85,14 @@ class ParallelProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskI
 			@Override
 			public void run()
 			{
-				for(int i = 0; i < subtasks.length; i++)
+				Job[] jobs = new Job[numSubtasks];
+				
+				for(int i = 0; i < numSubtasks; i++)
 				{
-					Phantom.dispatch(subtasks[i].createNewSubParallelJob(context.getSubContext(i)));
+					jobs[i] = subtasks[i].createNewSubParallelJob(context.new ParallelOutputSubContext(i));
 				}
+				
+				Phantom.dispatch(jobs);
 			}
 		}
 	}

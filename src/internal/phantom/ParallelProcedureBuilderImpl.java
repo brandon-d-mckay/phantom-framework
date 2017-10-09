@@ -20,7 +20,7 @@ class ParallelProcedureBuilderImpl extends AbstractCachedBuilder<ProcedureTaskIm
 	
 	private ParallelProcedureBuilderImpl(IntFunction<ProcedureTaskImpl[]> subtasksCollector)
 	{
-		super(() -> new ParallelProcedureTask(subtasksCollector.apply(0), null));
+		super(() -> new ParallelProcedureTaskImpl(subtasksCollector.apply(0), null));
 		this.subtasksCollector = subtasksCollector;
 	}
 	
@@ -39,7 +39,7 @@ class ParallelProcedureBuilderImpl extends AbstractCachedBuilder<ProcedureTaskIm
 	@Override
 	public NonInputTaskImpl construct(NonInputTaskImpl nextTask)
 	{
-		return new ParallelProcedureTask(subtasksCollector.apply(0), nextTask);
+		return new ParallelProcedureTaskImpl(subtasksCollector.apply(0), nextTask);
 	}
 	
 	@Override
@@ -48,11 +48,11 @@ class ParallelProcedureBuilderImpl extends AbstractCachedBuilder<ProcedureTaskIm
 		return getFromCache();
 	}
 	
-	public static class ParallelProcedureTask extends AbstractParallelNonOutputTaskImpl implements ProcedureTaskImpl
+	private static class ParallelProcedureTaskImpl extends AbstractParallelNonOutputTaskImpl implements ProcedureTaskImpl
 	{
 		private final ProcedureTaskImpl[] subtasks;
 		
-		public ParallelProcedureTask(ProcedureTaskImpl[] subtasks, NonInputTaskImpl nextTask)
+		public ParallelProcedureTaskImpl(ProcedureTaskImpl[] subtasks, NonInputTaskImpl nextTask)
 		{
 			super(subtasks.length, nextTask);
 			this.subtasks = subtasks;
@@ -61,20 +61,20 @@ class ParallelProcedureBuilderImpl extends AbstractCachedBuilder<ProcedureTaskIm
 		@Override
 		public Job createNewJob()
 		{
-			return new ParallelProcedureJob(new Context());
+			return new ParallelProcedureJob(new ParallelNonOutputContext());
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(ParallelContext context)
+		public Job createNewSubParallelJob(Context context)
 		{
-			return new ParallelProcedureJob(new ChildContext(context));
+			return new ParallelProcedureJob(new ParallelNonOutputChildContext(context));
 		}
 		
-		protected class ParallelProcedureJob extends AbstractJob
+		private class ParallelProcedureJob extends AbstractJob
 		{
-			private final Context context;
+			private final ParallelNonOutputContext context;
 			
-			public ParallelProcedureJob(Context context)
+			public ParallelProcedureJob(ParallelNonOutputContext context)
 			{
 				super(Meta.ExecuteOnSupplyingThread);
 				this.context = context;
@@ -83,10 +83,14 @@ class ParallelProcedureBuilderImpl extends AbstractCachedBuilder<ProcedureTaskIm
 			@Override
 			public void run()
 			{
-				for(NonInputTaskImpl subtask : subtasks)
+				Job[] jobs = new Job[numSubtasks];
+				
+				for(int i = 0; i < numSubtasks; i++)
 				{
-					Phantom.dispatch(subtask.createNewSubParallelJob(context));
+					jobs[i] = subtasks[i].createNewSubParallelJob(context);
 				}
+				
+				Phantom.dispatch(jobs);
 			}
 		}
 	}

@@ -8,7 +8,7 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 	private final IntFunction<ConsumerTaskImpl<? super I>[]> subtasksCollector;
 	
 	@SuppressWarnings("unchecked")
-	public ParallelConsumerBuilderImpl(ConsumerBuilderImpl<I> builder)
+	public ParallelConsumerBuilderImpl(ConsumerBuilderImpl<? super I> builder)
 	{
 		this(
 			subtaskIndex -> {
@@ -21,7 +21,7 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 	
 	private ParallelConsumerBuilderImpl(IntFunction<ConsumerTaskImpl<? super I>[]> subtasksCollector)
 	{
-		super(() -> new ParallelConsumerTask<>(subtasksCollector.apply(0), null));
+		super(() -> new ParallelConsumerTaskImpl<>(subtasksCollector.apply(0), null));
 		this.subtasksCollector = subtasksCollector;
 	}
 	
@@ -40,7 +40,7 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 	@Override
 	public InputTaskImpl<I> construct(NonInputTaskImpl nextTask)
 	{
-		return new ParallelConsumerTask<>(subtasksCollector.apply(0), nextTask);
+		return new ParallelConsumerTaskImpl<>(subtasksCollector.apply(0), nextTask);
 	}
 	
 	@Override
@@ -49,11 +49,11 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 		return getFromCache();
 	}
 	
-	public static class ParallelConsumerTask<I> extends AbstractParallelNonOutputTaskImpl implements ConsumerTaskImpl<I>
+	private static class ParallelConsumerTaskImpl<I> extends AbstractParallelNonOutputTaskImpl implements ConsumerTaskImpl<I>
 	{
 		private final ConsumerTaskImpl<? super I>[] subtasks;
 		
-		public ParallelConsumerTask(ConsumerTaskImpl<? super I>[] subtasks, NonInputTaskImpl nextTask)
+		public ParallelConsumerTaskImpl(ConsumerTaskImpl<? super I>[] subtasks, NonInputTaskImpl nextTask)
 		{
 			super(subtasks.length, nextTask);
 			this.subtasks = subtasks;
@@ -62,21 +62,21 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 		@Override
 		public Job createNewJob(I input)
 		{
-			return new ParallelConsumerJob(input, new Context());
+			return new ParallelConsumerJob(input, new ParallelNonOutputContext());
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(I input, ParallelContext context)
+		public Job createNewSubParallelJob(I input, Context context)
 		{
-			return new ParallelConsumerJob(input, new ChildContext(context));
+			return new ParallelConsumerJob(input, new ParallelNonOutputChildContext(context));
 		}
 		
-		protected class ParallelConsumerJob extends AbstractJob
+		private class ParallelConsumerJob extends AbstractJob
 		{
 			private final I input;
-			private final Context context;
+			private final ParallelNonOutputContext context;
 			
-			public ParallelConsumerJob(I input, Context context)
+			public ParallelConsumerJob(I input, ParallelNonOutputContext context)
 			{
 				super(Meta.ExecuteOnSupplyingThread);
 				this.input = input;
@@ -84,12 +84,17 @@ class ParallelConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskI
 			}
 			
 			@Override
+			
 			public void run()
 			{
-				for(InputTaskImpl<? super I> subtask : subtasks)
+				Job[] jobs = new Job[numSubtasks];
+			
+				for(int i = 0; i < subtasks.length; i++)
 				{
-					Phantom.dispatch(subtask.createNewSubParallelJob(input, context));
+					jobs[i] = subtasks[i].createNewSubParallelJob(input, context);
 				}
+				
+				Phantom.dispatch(jobs);
 			}
 		}
 	}

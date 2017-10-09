@@ -2,7 +2,7 @@ package phantom;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
-import phantom.SerialProcedureBuilderImpl.SerialProcedureTask;
+import phantom.SerialProcedureBuilderImpl.SerialProcedureTaskImpl;
 import util.AbstractCachedBuilder;
 
 class SerialProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImpl<O>> implements SerialProducerBuilder<O>, ProducerBuilderImpl<O>
@@ -26,7 +26,7 @@ class SerialProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImp
 		return new SerialProcedureBuilderImpl(taskConstructor.compose(builder::construct),
 			() -> {
 				ConsumerTaskImpl<? super O> tail = builder.construct();
-				return new SerialProcedureTask(taskConstructor.apply(tail), tail);
+				return new SerialProcedureTaskImpl(taskConstructor.apply(tail), tail);
 			}
 		);
 	}
@@ -37,7 +37,7 @@ class SerialProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImp
 		return new SerialProducerBuilderImpl<>(taskConstructor.compose(builder::construct),
 			() -> {
 				FunctionTaskImpl<? super O, ? extends T> tail = builder.construct();
-				return new SerialProducerTask<>(taskConstructor.apply(tail), tail);
+				return new SerialProducerTaskImpl<>(taskConstructor.apply(tail), tail);
 			}
 		);
 	}
@@ -54,9 +54,9 @@ class SerialProducerBuilderImpl<O> extends AbstractCachedBuilder<ProducerTaskImp
 		return getFromCache();
 	}
 	
-	public static class SerialProducerTask<O> extends AbstractSerialNonInputTaskImpl implements ProducerTaskImpl<O>
+	static class SerialProducerTaskImpl<O> extends AbstractSerialNonInputTaskImpl implements ProducerTaskImpl<O>
 	{
-		public SerialProducerTask(NonInputTaskImpl head, OutputTaskImpl<? extends O> tail)
+		public SerialProducerTaskImpl(NonInputTaskImpl head, OutputTaskImpl<? extends O> tail)
 		{
 			super(head);
 		}

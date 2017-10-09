@@ -1,0 +1,3 @@
+package phantom;
+
+interface Context {}

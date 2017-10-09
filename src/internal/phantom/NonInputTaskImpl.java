@@ -4,5 +4,5 @@ interface NonInputTaskImpl extends Task
 {
 	Job createNewJob();
 	
-	Job createNewSubParallelJob(ParallelContext context);
+	Job createNewSubParallelJob(Context context);
 }

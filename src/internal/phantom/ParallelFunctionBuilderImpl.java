@@ -2,13 +2,14 @@ package phantom;
 
 import java.util.function.IntFunction;
 import util.AbstractCachedBuilder;
+import util.VolatileArray;
 
-class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTaskImpl<I, O[]>> implements ParallelFunctionBuilder<I, O>, FunctionBuilderImpl<I, O[]>
+class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTaskImpl<I, VolatileArray<O>>> implements ParallelFunctionBuilder<I, O>, FunctionBuilderImpl<I, VolatileArray<O>>
 {
 	private final IntFunction<FunctionTaskImpl<? super I, ? extends O>[]> subtasksCollector;
 	
 	@SuppressWarnings("unchecked")
-	public ParallelFunctionBuilderImpl(FunctionBuilderImpl<I, O> builder)
+	public ParallelFunctionBuilderImpl(FunctionBuilderImpl<? super I, ? extends O> builder)
 	{
 		this(
 			subtaskIndex -> {
@@ -21,7 +22,7 @@ class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTa
 	
 	private ParallelFunctionBuilderImpl(IntFunction<FunctionTaskImpl<? super I, ? extends O>[]> subtasksCollector)
 	{
-		super(() -> new ParallelFunctionTask<>(subtasksCollector.apply(0), null));
+		super(() -> new ParallelFunctionTaskImpl<>(subtasksCollector.apply(0), null));
 		this.subtasksCollector = subtasksCollector;
 	}
 	
@@ -38,22 +39,22 @@ class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTa
 	}
 	
 	@Override
-	public InputTaskImpl<I> construct(InputTaskImpl<? super O[]> nextTask)
+	public InputTaskImpl<I> construct(InputTaskImpl<? super VolatileArray<O>> nextTask)
 	{
-		return new ParallelFunctionTask<>(subtasksCollector.apply(0), nextTask);
+		return new ParallelFunctionTaskImpl<>(subtasksCollector.apply(0), nextTask);
 	}
 	
 	@Override
-	public FunctionTaskImpl<I, O[]> construct()
+	public FunctionTaskImpl<I, VolatileArray<O>> construct()
 	{
 		return getFromCache();
 	}
 	
-	public static class ParallelFunctionTask<I, O> extends AbstractParallelOutputTaskImpl<O> implements FunctionTaskImpl<I, O[]>
+	private static class ParallelFunctionTaskImpl<I, O> extends AbstractParallelOutputTaskImpl<O> implements FunctionTaskImpl<I, VolatileArray<O>>
 	{
 		private final FunctionTaskImpl<? super I, ? extends O>[] subtasks;
 		
-		public ParallelFunctionTask(FunctionTaskImpl<? super I, ? extends O>[] subtasks, InputTaskImpl<? super O[]> nextTask)
+		public ParallelFunctionTaskImpl(FunctionTaskImpl<? super I, ? extends O>[] subtasks, InputTaskImpl<? super VolatileArray<O>> nextTask)
 		{
 			super(subtasks.length, nextTask);
 			this.subtasks = subtasks;
@@ -62,21 +63,21 @@ class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTa
 		@Override
 		public Job createNewJob(I input)
 		{
-			return new ParallelFunctionJob(input, new Context());
+			return new ParallelFunctionJob(input, new ParallelOutputContext());
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(I input, ParallelContext context)
+		public Job createNewSubParallelJob(I input, Context context)
 		{
-			return new ParallelFunctionJob(input, new ChildContext(context));
+			return new ParallelFunctionJob(input, new ParallelOutputChildContext(context));
 		}
 		
-		protected class ParallelFunctionJob extends AbstractJob
+		private class ParallelFunctionJob extends AbstractJob
 		{
 			private final I input;
-			private final Context context;
+			private final ParallelOutputContext context;
 			
-			public ParallelFunctionJob(I input, Context context)
+			public ParallelFunctionJob(I input, ParallelOutputContext context)
 			{
 				super(Meta.ExecuteOnSupplyingThread);
 				this.input = input;
@@ -85,11 +86,15 @@ class ParallelFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTa
 			
 			@Override
 			public void run()
-			{
+			{	
+				Job[] jobs = new Job[numSubtasks];
+			
 				for(int i = 0; i < subtasks.length; i++)
 				{
-					Phantom.dispatch(subtasks[i].createNewSubParallelJob(input, context.getSubContext(i)));
+					jobs[i] = subtasks[i].createNewSubParallelJob(input, context.new ParallelOutputSubContext(i));
 				}
+				
+				Phantom.dispatch(jobs);
 			}
 		}
 	}

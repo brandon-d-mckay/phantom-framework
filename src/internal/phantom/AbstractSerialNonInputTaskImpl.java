@@ -16,7 +16,7 @@ abstract class AbstractSerialNonInputTaskImpl implements NonInputTaskImpl
 	}
 
 	@Override
-	public Job createNewSubParallelJob(ParallelContext context)
+	public Job createNewSubParallelJob(Context context)
 	{
 		return head.createNewSubParallelJob(context);
 	}

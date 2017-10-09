@@ -4,5 +4,5 @@ interface InputTaskImpl<I> extends Task
 {
 	Job createNewJob(I input);
 	
-	Job createNewSubParallelJob(I input, ParallelContext context);
+	Job createNewSubParallelJob(I input, Context context);
 }

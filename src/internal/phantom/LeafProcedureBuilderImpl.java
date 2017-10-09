@@ -23,7 +23,7 @@ class LeafProcedureBuilderImpl implements ProcedureBuilderImpl
 		return new LeafProcedureTaskImpl(null);
 	}
 	
-	class LeafProcedureTaskImpl extends AbstractNonOutputTaskImpl implements ProcedureTaskImpl
+	private class LeafProcedureTaskImpl extends AbstractNonOutputTaskImpl implements ProcedureTaskImpl
 	{
 		public LeafProcedureTaskImpl(NonInputTaskImpl nextTask)
 		{
@@ -37,12 +37,12 @@ class LeafProcedureBuilderImpl implements ProcedureBuilderImpl
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(ParallelContext context)
+		public Job createNewSubParallelJob(Context context)
 		{
 			return new SubParallelProcedureJob(context, metadata);
 		}
 		
-		protected class ProcedureJob extends AbstractJob
+		private class ProcedureJob extends AbstractJob
 		{
 			public ProcedureJob(byte metadata)
 			{
@@ -58,9 +58,9 @@ class LeafProcedureBuilderImpl implements ProcedureBuilderImpl
 			}
 		}
 		
-		protected class SubParallelProcedureJob extends AbstractSubParallelJob
+		private class SubParallelProcedureJob extends AbstractSubParallelJob
 		{
-			public SubParallelProcedureJob(ParallelContext context, byte metadata)
+			public SubParallelProcedureJob(Context context, byte metadata)
 			{
 				super(context, metadata);
 			}
@@ -71,7 +71,7 @@ class LeafProcedureBuilderImpl implements ProcedureBuilderImpl
 				lambda.invoke();
 				
 				if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(context));
-				else ((ParallelNonOutputContext) context).completeSubtask();
+				else ((NonOutputContext) context).complete();
 			}
 		}
 	}

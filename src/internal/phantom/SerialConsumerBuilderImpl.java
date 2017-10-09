@@ -2,7 +2,7 @@ package phantom;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
-import phantom.SerialFunctionBuilderImpl.SerialFunctionTask;
+import phantom.SerialFunctionBuilderImpl.SerialFunctionTaskImpl;
 import util.AbstractCachedBuilder;
 
 class SerialConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskImpl<I>> implements SerialConsumerBuilder<I>, ConsumerBuilderImpl<I>
@@ -37,7 +37,7 @@ class SerialConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskImp
 		return new SerialFunctionBuilderImpl<>(taskConstructor.compose(builder::construct),
 			() -> {
 				ProducerTaskImpl<? extends T> tail = builder.construct();
-				return new SerialFunctionTask<>(taskConstructor.apply(tail), tail);
+				return new SerialFunctionTaskImpl<>(taskConstructor.apply(tail), tail);
 			}
 		);
 	}
@@ -54,7 +54,7 @@ class SerialConsumerBuilderImpl<I> extends AbstractCachedBuilder<ConsumerTaskImp
 		return getFromCache();
 	}
 
-	public static class SerialConsumerTaskImpl<I> extends AbstractSerialInputTaskImpl<I> implements ConsumerTaskImpl<I>
+	static class SerialConsumerTaskImpl<I> extends AbstractSerialInputTaskImpl<I> implements ConsumerTaskImpl<I>
 	{
 		public SerialConsumerTaskImpl(InputTaskImpl<? super I> head, NonOutputTaskImpl tail)
 		{

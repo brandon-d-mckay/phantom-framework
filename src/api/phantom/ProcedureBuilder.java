@@ -1,7 +1,7 @@
 package phantom;
 
-import util.characteristics.Builder;
-import util.characteristics.Mask;
+import util.Builder;
+import util.Mask;
 
 public interface ProcedureBuilder extends Mask<ProcedureBuilderImpl>, Builder<ProcedureTask>
 {

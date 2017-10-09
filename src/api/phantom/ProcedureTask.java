@@ -1,6 +1,6 @@
 package phantom;
 
-import util.characteristics.Mask;
+import util.Mask;
 
 public interface ProcedureTask extends Mask<ProcedureTaskImpl>
 {

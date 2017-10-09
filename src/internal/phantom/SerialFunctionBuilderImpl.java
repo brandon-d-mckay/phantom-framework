@@ -37,7 +37,7 @@ class SerialFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTask
 		return new SerialFunctionBuilderImpl<>(taskConstructor.compose(builder::construct),
 			() -> {
 				FunctionTaskImpl<? super O, ? extends T> tail = builder.construct();
-				return new SerialFunctionTask<>(taskConstructor.apply(tail), tail);
+				return new SerialFunctionTaskImpl<>(taskConstructor.apply(tail), tail);
 			}
 		);
 	}
@@ -54,9 +54,9 @@ class SerialFunctionBuilderImpl<I, O> extends AbstractCachedBuilder<FunctionTask
 		return getFromCache();
 	}
 
-	public static class SerialFunctionTask<I, O> extends AbstractSerialInputTaskImpl<I> implements FunctionTaskImpl<I, O>
+	static class SerialFunctionTaskImpl<I, O> extends AbstractSerialInputTaskImpl<I> implements FunctionTaskImpl<I, O>
 	{
-		public SerialFunctionTask(InputTaskImpl<? super I> head, OutputTaskImpl<? extends O> tail)
+		public SerialFunctionTaskImpl(InputTaskImpl<? super I> head, OutputTaskImpl<? extends O> tail)
 		{
 			super(head);
 		}

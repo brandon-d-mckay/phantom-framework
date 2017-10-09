@@ -23,7 +23,7 @@ class LeafProducerBuilderImpl<O> implements ProducerBuilderImpl<O>
 		return new LeafProducerTaskImpl(null);
 	}
 	
-	class LeafProducerTaskImpl extends AbstractOutputTaskImpl<O> implements ProducerTaskImpl<O>
+	private class LeafProducerTaskImpl extends AbstractOutputTaskImpl<O> implements ProducerTaskImpl<O>
 	{
 		public LeafProducerTaskImpl(InputTaskImpl<? super O> nextTask)
 		{
@@ -37,12 +37,12 @@ class LeafProducerBuilderImpl<O> implements ProducerBuilderImpl<O>
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(ParallelContext context)
+		public Job createNewSubParallelJob(Context context)
 		{
 			return new SubParallelProducerJob(context, metadata);
 		}
 		
-		protected class ProducerJob extends AbstractJob
+		private class ProducerJob extends AbstractJob
 		{
 			public ProducerJob(byte metadata)
 			{
@@ -56,9 +56,9 @@ class LeafProducerBuilderImpl<O> implements ProducerBuilderImpl<O>
 			}
 		}
 		
-		protected class SubParallelProducerJob extends AbstractSubParallelJob
+		private class SubParallelProducerJob extends AbstractSubParallelJob
 		{
-			public SubParallelProducerJob(ParallelContext context, byte metadata)
+			public SubParallelProducerJob(Context context, byte metadata)
 			{
 				super(context, metadata);
 			}
@@ -70,7 +70,7 @@ class LeafProducerBuilderImpl<O> implements ProducerBuilderImpl<O>
 				O output = lambda.invoke();
 				
 				if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(output, context));
-				else ((ParallelOutputContext<O>) context).completeSubtask(output);
+				else ((OutputContext<O>) context).complete(output);
 			}
 		}
 	}

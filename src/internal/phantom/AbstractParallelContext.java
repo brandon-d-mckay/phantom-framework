@@ -2,7 +2,7 @@ package phantom;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class AbstractParallelContext implements ParallelContext
+abstract class AbstractParallelContext implements Context
 {
 	private final AtomicInteger subtaskCompletionCountdown;
 	
@@ -11,7 +11,7 @@ abstract class AbstractParallelContext implements ParallelContext
 		subtaskCompletionCountdown = new AtomicInteger(numSubtasks);
 	}
  
-	protected void decrementCountdown()
+	protected final void decrementCountdown()
 	{
 		if(subtaskCompletionCountdown.decrementAndGet() == 0) dispatchNextTask();
 	}

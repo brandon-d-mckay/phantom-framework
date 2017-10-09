@@ -2,7 +2,7 @@ package phantom;
 
 abstract class AbstractParallelNonOutputTaskImpl extends AbstractNonOutputTaskImpl
 {
-	private final int numSubtasks;
+	protected final int numSubtasks;
 	
 	public AbstractParallelNonOutputTaskImpl(int numSubtasks, NonInputTaskImpl nextTask)
 	{
@@ -10,15 +10,15 @@ abstract class AbstractParallelNonOutputTaskImpl extends AbstractNonOutputTaskIm
 		this.numSubtasks = numSubtasks;
 	}
 	
-	protected class Context extends AbstractParallelContext implements ParallelNonOutputContext
+	protected class ParallelNonOutputContext extends AbstractParallelContext implements NonOutputContext
 	{
-		public Context()
+		public ParallelNonOutputContext()
 		{
 			super(numSubtasks);
 		}
 		
 		@Override
-		public void completeSubtask()
+		public void complete()
 		{
 			decrementCountdown();
 		}
@@ -30,20 +30,20 @@ abstract class AbstractParallelNonOutputTaskImpl extends AbstractNonOutputTaskIm
 		}
 	}
 	
-	protected class ChildContext extends Context
+	protected class ParallelNonOutputChildContext extends ParallelNonOutputContext
 	{
-		private final ParallelContext parentContext;
+		private final NonOutputContext parentContext;
 		
-		public ChildContext(ParallelContext parentContext)
+		public ParallelNonOutputChildContext(Context parentContext)
 		{
-			this.parentContext = parentContext;
+			this.parentContext = (NonOutputContext) parentContext;
 		}
 		
 		@Override
 		protected void dispatchNextTask()
 		{
 			if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(parentContext));
-			else ((ParallelNonOutputContext) parentContext).completeSubtask();
+			else parentContext.complete();
 		}
 	}
 }

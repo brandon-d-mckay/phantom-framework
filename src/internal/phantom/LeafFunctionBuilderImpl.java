@@ -23,7 +23,7 @@ class LeafFunctionBuilderImpl<I, O> implements FunctionBuilderImpl<I, O>
 		return new LeafFunctionTaskImpl(null);
 	}
 	
-	class LeafFunctionTaskImpl extends AbstractOutputTaskImpl<O> implements FunctionTaskImpl<I, O>
+	private class LeafFunctionTaskImpl extends AbstractOutputTaskImpl<O> implements FunctionTaskImpl<I, O>
 	{
 		public LeafFunctionTaskImpl(InputTaskImpl<? super O> nextTask)
 		{
@@ -37,12 +37,12 @@ class LeafFunctionBuilderImpl<I, O> implements FunctionBuilderImpl<I, O>
 		}
 		
 		@Override
-		public Job createNewSubParallelJob(I input, ParallelContext context)
+		public Job createNewSubParallelJob(I input, Context context)
 		{
 			return new SubParallelFunctionJob(input, context, metadata);
 		}
 		
-		protected class FunctionJob extends AbstractJob
+		private class FunctionJob extends AbstractJob
 		{
 			private final I input;
 			
@@ -59,11 +59,11 @@ class LeafFunctionBuilderImpl<I, O> implements FunctionBuilderImpl<I, O>
 			}
 		}
 		
-		protected class SubParallelFunctionJob extends AbstractSubParallelJob
+		private class SubParallelFunctionJob extends AbstractSubParallelJob
 		{
 			private final I input;
 
-			public SubParallelFunctionJob(I input, ParallelContext context, byte metadata)
+			public SubParallelFunctionJob(I input, Context context, byte metadata)
 			{
 				super(context, metadata);
 				this.input = input;
@@ -76,7 +76,7 @@ class LeafFunctionBuilderImpl<I, O> implements FunctionBuilderImpl<I, O>
 				O output = lambda.invoke(input);
 				
 				if(nextTask != null) Phantom.dispatch(nextTask.createNewSubParallelJob(output, context));
-				else ((ParallelOutputContext<O>) context).completeSubtask(output);
+				else ((OutputContext<O>) context).complete(output);
 			}
 		}
 	}

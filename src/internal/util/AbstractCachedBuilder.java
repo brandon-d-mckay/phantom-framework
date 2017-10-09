@@ -18,7 +18,7 @@ public abstract class AbstractCachedBuilder<T>
 	
 	private void compareAndSwapCache(Cache<T> expect, Cache<T> update)
 	{
-		VeryUnsafe.compareAndSetObject(this, VeryUnsafe.getFieldOffset(getClass(), "cache"), expect, update);
+		VeryUnsafe.compareAndSetObject(this, VeryUnsafe.getFieldOffset(AbstractCachedBuilder.class, "cache"), expect, update);
 	}
 	
 	private interface Cache<T>

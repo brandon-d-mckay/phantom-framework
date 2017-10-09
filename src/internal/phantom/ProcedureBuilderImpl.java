@@ -1,6 +1,6 @@
 package phantom;
 
-import util.characteristics.Constructor;
+import util.Constructor;
 
 interface ProcedureBuilderImpl extends ProcedureBuilder, Constructor<ProcedureTaskImpl>
 {

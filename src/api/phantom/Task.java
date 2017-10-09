@@ -7,14 +7,14 @@ public interface Task
 	static <O> ProducerLambda<O> lambda(ProducerLambda<O> lambda) { return lambda; }
 	static <I, O> FunctionLambda<I, O> lambda(FunctionLambda<I, O> lambda) { return lambda; }
 	
-	static ProcedureBuilder builder(ProcedureLambda lambda) { return lambda.unmask(); }
-	static ProcedureBuilder builder(byte metadata, ProcedureLambda lambda) { return lambda.unmask(metadata); }
-	static <I> ConsumerBuilder<I> builder(ConsumerLambda<I> lambda) { return lambda.unmask(); }
-	static <I> ConsumerBuilder<I> builder(byte metadata, ConsumerLambda<I> lambda) { return lambda.unmask(metadata); }
-	static <O> ProducerBuilder<O> builder(ProducerLambda<O> lambda) { return lambda.unmask(); }
-	static <O> ProducerBuilder<O> builder(byte metadata, ProducerLambda<O> lambda) { return lambda.unmask(metadata); }
-	static <I, O> FunctionBuilder<I, O> builder(FunctionLambda<I, O> lambda) { return lambda.unmask(); }
-	static <I, O> FunctionBuilder<I, O> builder(byte metadata, FunctionLambda<I, O> lambda) { return lambda.unmask(metadata); }
+	static ProcedureBuilder leaf(ProcedureLambda lambda) { return lambda.unmask(); }
+	static ProcedureBuilder leaf(byte metadata, ProcedureLambda lambda) { return lambda.unmask(metadata); }
+	static <I> ConsumerBuilder<I> leaf(ConsumerLambda<I> lambda) { return lambda.unmask(); }
+	static <I> ConsumerBuilder<I> leaf(byte metadata, ConsumerLambda<I> lambda) { return lambda.unmask(metadata); }
+	static <O> ProducerBuilder<O> leaf(ProducerLambda<O> lambda) { return lambda.unmask(); }
+	static <O> ProducerBuilder<O> leaf(byte metadata, ProducerLambda<O> lambda) { return lambda.unmask(metadata); }
+	static <I, O> FunctionBuilder<I, O> leaf(FunctionLambda<I, O> lambda) { return lambda.unmask(); }
+	static <I, O> FunctionBuilder<I, O> leaf(byte metadata, FunctionLambda<I, O> lambda) { return lambda.unmask(metadata); }
 	
 	static SerialProcedureBuilder serial(ProcedureLambda lambda) { return serial(lambda.unmask()); }
 	static SerialProcedureBuilder serial(byte metadata, ProcedureLambda lambda) { return serial(lambda.unmask(metadata)); }
@@ -50,17 +50,21 @@ public interface Task
 	static <I, O> ParallelFunctionBuilder<I, O> parallel(FunctionBuilder<I, O> builder) { return parallel(builder.unmask()); }
 	static <I, O> ParallelFunctionBuilder<I, O> parallel(FunctionBuilderImpl<I, O> builder) { return new ParallelFunctionBuilderImpl<>(builder); }
 	
-	static ProcedureTask task(ProcedureLambda lambda) { return lambda.build(); }
-	static ProcedureTask task(byte metadata, ProcedureLambda lambda) { return lambda.unmask(metadata).build(); }
-	static <I> ConsumerTask<I> task(ConsumerLambda<I> lambda) { return lambda.build(); }
-	static <I> ConsumerTask<I> task(byte metadata, ConsumerLambda<I> lambda) { return lambda.unmask(metadata).build(); }
-	static <O> ProducerTask<O> task(ProducerLambda<O> lambda) { return lambda.build(); }
-	static <O> ProducerTask<O> task(byte metadata, ProducerLambda<O> lambda) { return lambda.unmask(metadata).build(); }
-	static <I, O> FunctionTask<I, O> task(FunctionLambda<I, O> lambda) { return lambda.build(); }
-	static <I, O> FunctionTask<I, O> task(byte metadata, FunctionLambda<I, O> lambda) { return lambda.unmask(metadata).build(); }
+	static ProcedureTask make(ProcedureLambda lambda) { return lambda.build(); }
+	static ProcedureTask make(byte metadata, ProcedureLambda lambda) { return lambda.unmask(metadata).build(); }
+	static <I> ConsumerTask<I> make(ConsumerLambda<I> lambda) { return lambda.build(); }
+	static <I> ConsumerTask<I> make(byte metadata, ConsumerLambda<I> lambda) { return lambda.unmask(metadata).build(); }
+	static <O> ProducerTask<O> make(ProducerLambda<O> lambda) { return lambda.build(); }
+	static <O> ProducerTask<O> make(byte metadata, ProducerLambda<O> lambda) { return lambda.unmask(metadata).build(); }
+	static <I, O> FunctionTask<I, O> make(FunctionLambda<I, O> lambda) { return lambda.build(); }
+	static <I, O> FunctionTask<I, O> make(byte metadata, FunctionLambda<I, O> lambda) { return lambda.unmask(metadata).build(); }
 	
 	static void start(ProcedureLambda lambda) { lambda.start(); }
 	static void start(byte metadata, ProcedureLambda lambda) { lambda.unmask(metadata).start(); }
+	static void start(ProcedureLambda lambda, ProcedureLambda... lambdas) { lambda.start(); for(ProcedureLambda l : lambdas) l.start(); }
+	static void start(byte metadata, ProcedureLambda lambda, ProcedureLambda... lambdas) { lambda.start(metadata); for(ProcedureLambda l : lambdas) l.start(metadata); }
 	static <I> void start(I input, ConsumerLambda<I> lambda) { lambda.start(input); }
-	static <I> void start(I input, byte metadata, ConsumerLambda<I> lambda) { lambda.unmask(metadata).start(input); }
+	static <I> void start(byte metadata, I input, ConsumerLambda<I> lambda) { lambda.unmask(metadata).start(input); }
+	@SafeVarargs static <I> void start(I input, ConsumerLambda<I> lambda, ConsumerLambda<I>... lambdas) { lambda.start(input); for(ConsumerLambda<I> l : lambdas) l.start(input); }
+	@SafeVarargs static <I> void start(byte metadata, I input, ConsumerLambda<I> lambda, ConsumerLambda<I>... lambdas) { lambda.start(metadata, input); for(ConsumerLambda<I> l : lambdas) l.start(metadata, input); }
 }
