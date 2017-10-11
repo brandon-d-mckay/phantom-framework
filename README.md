@@ -14,13 +14,13 @@ All internals of the framework are non-blocking and lock-free aside from the def
 
 `Lambda` interfaces are the computational building blocks of the framework and account for all user-defined code. They consist of the four combinatorial method signatures possible from having one or zero parameters along with one or zero (`void`) return values. They are accordingly given the names `ProcedureLambda`, `ConsumerLambda`, `ProducerLambda`, and `FunctionLambda`. These are congruent to the `Runnable`, `Consumer`, `Supplier`, and `Function` interfaces in *Java SE*, but additionally implement and provide default methods for the `Builder` classes of the framework that are ubiquitously used throughout. They also provide additional default methods for composing themselves with one another, which is a feature not wholely available among their *Java SE* counterparts.
 
-The static `Task.lambda` utility methods allow you to supply lambda expressions and will return instances of their respective `Lambda` interfaces, which may be composed and reused with different `Builder`s.
+As expected, `Lambda`s can be instantiated by using lambda expressions with assignments and method calls. The static `Task.lambda` utility methods also provide this functionality within ambiguous contexts. Since `Lambda`s are stateless, they may be reused with different `Builder`s.
 
 Example:
 ```java
-FunctionLambda<Integer, Integer> square = x -> x * x;
+FunctionLambda<Long, Long> elapsedTime = t -> System.nanoTime() - t;
 
-square.pipeRight(x -> {
+elapsedTime.pipeRight(x -> {
 	System.out.println(x);
 }).pipeLeft(() -> 7).start();
 ```
@@ -58,7 +58,7 @@ Task.serial((String s) -> {
     System.out.print("Task #3 received " + i + " and is going to sleep... ");
     try { Thread.sleep(3000); } catch(InterruptedException e) {}
     List<Integer> list = new ArrayList<>();
-    System.out.println("Task #3 is waking up and sends an " + list.getClass().getSimpleName());
+    System.out.println("Task #3 is waking up and sends an " + list.getClassgetSimpleName());
     return list;
 }).then((Collection<Integer> collection) -> {
     System.out.println("Task #4 received an " + collection.getClass().getSimpleName());
