@@ -47,19 +47,22 @@ The *Phantom Framework* avoids this by instead lazily instantiating a `Job` obje
 
 Example:
 ```java
-Task.serial(() -> {
-	System.out.println("Task 1");
-}).then(() -> {
-	String s = "Hello world!";
-	System.out.println("Task 2 sends '" + s + "'");
-	return s;
+Task.serial((String s) -> {
+    System.out.println("Task #1 sends '" + s + "'");
+    return s;
 }).then(s -> {
-	int i = 7;
-	System.out.println("Task 3 received '" + s + "' and sends " + i);
-	return i;
+    int i = 7;
+    System.out.println("Task #2 received '" + s + "' and sends " + i);
+    return i;
 }).then(i -> {
-	System.out.println("Task 4 received " + i);
-}).start();
+    System.out.print("Task #3 received " + i + " and is going to sleep... ");
+    try { Thread.sleep(3000); } catch(InterruptedException e) {}
+    List<Integer> list = new ArrayList<>();
+    System.out.println("Task #3 is waking up and sends an " + list.getClass().getSimpleName());
+    return list;
+}).then((Collection<Integer> collection) -> {
+    System.out.println("Task #4 received an " + collection.getClass().getSimpleName());
+}).start("Hello world!");
 ```
 
 ### Parallel Task Execution
