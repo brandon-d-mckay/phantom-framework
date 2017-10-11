@@ -6,7 +6,7 @@ All internals of the framework are non-blocking and lock-free aside from the def
 
 ## Installation
 
-*(JAR file forthcoming)*
+*(First release ETA 10/13/17. In the mean time, feel free to clone the repo and try everything out.)*
 
 ## Usage
 
